@@ -529,6 +529,29 @@ class WanFunInpaintAudioPipeline(DiffusionPipeline):
 
         """
         # self.config = config
+        if isinstance(prompt_embeds, list):
+            # Pad sequences to same length and stack
+            max_len = max(emb.shape[0] for emb in prompt_embeds)
+            padded_embeds = []
+            for emb in prompt_embeds:
+                if emb.shape[0] < max_len:
+                    padding = torch.zeros(max_len - emb.shape[0], emb.shape[1], 
+                                        dtype=emb.dtype, device=emb.device)
+                    emb = torch.cat([emb, padding], dim=0)
+                padded_embeds.append(emb)
+            prompt_embeds = torch.stack(padded_embeds, dim=0)
+
+        if isinstance(negative_prompt_embeds, list):
+            # Same padding logic for negative prompts
+            max_len = max(emb.shape[0] for emb in negative_prompt_embeds)
+            padded_embeds = []
+            for emb in negative_prompt_embeds:
+                if emb.shape[0] < max_len:
+                    padding = torch.zeros(max_len - emb.shape[0], emb.shape[1], 
+                                        dtype=emb.dtype, device=emb.device)
+                    emb = torch.cat([emb, padding], dim=0)
+                padded_embeds.append(emb)
+            negative_prompt_embeds = torch.stack(padded_embeds, dim=0)
 
         if isinstance(callback_on_step_end, (PipelineCallback, MultiPipelineCallbacks)):
             callback_on_step_end_tensor_inputs = callback_on_step_end.tensor_inputs
